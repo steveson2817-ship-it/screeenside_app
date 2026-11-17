@@ -99,7 +99,15 @@ export function parseCookies(request) {
   const out = {}
   header.split(';').forEach((part) => {
     const index = part.indexOf('=')
-    if (index > -1) out[part.slice(0, index).trim()] = decodeURIComponent(part.slice(index + 1).trim())
+    if (index < 0) return
+    const raw = part.slice(index + 1).trim()
+    let value = raw
+    try {
+      value = decodeURIComponent(raw)
+    } catch {
+      // A malformed cookie set by something else on this domain must not break the API.
+    }
+    out[part.slice(0, index).trim()] = value
   })
   return out
 }
@@ -140,8 +148,10 @@ export function clientIp(request) {
 }
 
 export async function readJson(request, maxBytes = 400000) {
+  const declared = Number(request.headers.get('content-length'))
+  if (Number.isFinite(declared) && declared > maxBytes) throw new Error('That request is too large.')
   const text = await request.text()
-  if (text.length > maxBytes) throw new Error('That request is too large.')
+  if (encoder.encode(text).length > maxBytes) throw new Error('That request is too large.')
   try {
     return JSON.parse(text)
   } catch {

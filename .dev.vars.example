@@ -1,0 +1,11 @@
+# Copy to .dev.vars for local development (`npm start`). Never commit .dev.vars.
+# In production set these as secrets instead, e.g. `npx wrangler secret put SETUP_TOKEN`.
+
+# One-time code for creating the admin account at /admin (at least 12 characters).
+# Generate one with: node -e "console.log(crypto.randomUUID())"
+SETUP_TOKEN=
+
+# Optional: enable AI replies in the chatbot. Without a key the built-in guide answers.
+OPENAI_API_KEY=
+# AI_BASE_URL=https://api.openai.com/v1
+# AI_MODEL=gpt-4o-mini

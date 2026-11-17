@@ -1,11 +1,11 @@
 // Real language-model integration.
 // Works with any OpenAI-compatible chat-completions API, configured by environment variables:
 //   OPENAI_API_KEY (or AI_API_KEY)  - required to enable AI replies
-//   AI_BASE_URL                     - default https://freebuff.com/api/v1/paid
+//   AI_BASE_URL                     - default https://api.openai.com/v1
 //   AI_MODEL                        - default gpt-4o-mini
 // If the key is missing, or the provider fails, the caller falls back to the built-in guide.
 
-const DEFAULT_BASE_URL = 'https://freebuff.com/api/v1/paid'
+const DEFAULT_BASE_URL = 'https://api.openai.com/v1'
 const DEFAULT_MODEL = 'gpt-4o-mini'
 
 export const SYSTEM_PROMPT = `You are ScreenSide Guide, the assistant inside ScreenSide, a cyberbullying-awareness website for school students (roughly ages 11-17, mostly in India).
