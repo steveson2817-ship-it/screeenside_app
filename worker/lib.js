@@ -63,7 +63,7 @@ export function safeEqual(a, b) {
   return diff === 0
 }
 
-const PBKDF2_ITERATIONS = 150000
+const PBKDF2_ITERATIONS = 100000
 
 export async function hashPassword(password) {
   const salt = randomHex(16)

@@ -11,4 +11,4 @@ not_found_handling = "single-page-application"
 [[d1_databases]]
 binding = "DB"
 database_name = "screenside"
-database_id = "00000000-0000-0000-0000-000000000000"
+database_id = "650953af-d25e-4f84-a569-0d43dff69e2c"
