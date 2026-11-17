@@ -22,23 +22,55 @@ const PLATFORMS = [
   { key: 'game', words: ['free fire', 'bgmi', 'roblox', 'minecraft', 'valorant', 'in a game', 'game chat'] },
 ]
 
+// Messages and keywords both go through this, so "self-harm", "two-factor", "I'm" and
+// "cybercrime.gov.in" compare equal to how they are written in the topic lists.
 function normalise(value) {
   return String(value || '')
     .toLowerCase()
-    .replace(/[’‘]/g, "'")
-    .replace(/[^a-z0-9\s']/g, ' ')
+    .replace(/['’‘`]/g, '')
+    .replace(/[^a-z0-9\s]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim()
 }
 
-function hasAny(text, words) {
-  return words.some((word) => text.includes(word))
+// Keywords match on word boundaries, never inside another word ("upi" must not match "stupid",
+// "fir" must not match "first"). Words longer than three letters may carry a common ending
+// ("insult" matches "insulting", "harass" matches "harassment"); short ones must match exactly.
+const SUFFIXES = 's|es|ed|d|ing|er|ers|ment|ments|ion|ions|ation'
+const patternCache = new Map()
+
+function keywordPattern(word) {
+  let pattern = patternCache.get(word)
+  if (pattern === undefined) {
+    const needle = normalise(word)
+    if (!needle) {
+      pattern = null
+    } else {
+      const escaped = needle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+      const ending = needle.length <= 3 ? '' : `(?:${SUFFIXES})?`
+      pattern = new RegExp(`(?:^| )${escaped}${ending}(?= |$)`)
+    }
+    patternCache.set(word, pattern)
+  }
+  return pattern
 }
 
-// Whole-word matching for short replies, so "no" does not match "nothing".
+function matches(text, word) {
+  const pattern = keywordPattern(word)
+  return pattern ? pattern.test(text) : false
+}
+
+function hasAny(text, words) {
+  return words.some((word) => matches(text, word))
+}
+
+// Exact whole-word matching for short replies, so "no" does not match "nothing" or "nope".
 function hasWord(text, words) {
-  const tokens = text.split(' ')
-  return words.some((phrase) => (phrase.includes(' ') ? text.includes(phrase) : tokens.includes(phrase)))
+  const padded = ` ${text} `
+  return words.some((phrase) => {
+    const needle = normalise(phrase)
+    return needle ? padded.includes(` ${needle} `) : false
+  })
 }
 
 function hash(value) {
@@ -74,30 +106,32 @@ function analyse(messages) {
   }
 }
 
+// Mirrors the order guideReply uses, so a message is only treated as a definition lookup
+// when it is actually phrased as a question about the term.
 function detect(text) {
   if (!text) return null
-  if (findDefinition(text)) return null
+  if (isDefinitionQuestion(text) && findDefinition(text)) return null
   const topic = TOPICS.find((entry) => hasAny(text, entry.words))
   return topic ? topic.id : null
 }
 
 function findDefinition(text) {
   for (const definition of Object.values(DEFINITIONS)) {
-    if (definition.aliases.some((alias) => text.includes(alias))) return definition
+    if (hasAny(text, definition.aliases)) return definition
   }
   return null
 }
 
+const DEFINITION_CUES = ['what is', 'what are', 'whats', 'meaning', 'define', 'explain', 'tell me about', 'difference between', 'what does']
+
 // Only treat a term as a "what is…" lookup when they are actually asking about the term.
 function isDefinitionQuestion(text) {
-  const cues = ['what is', 'what are', 'whats', 'what s', 'meaning', 'define', 'explain', 'tell me about', 'difference between', 'what does']
-  if (cues.some((cue) => text.includes(cue))) return true
+  if (hasAny(text, DEFINITION_CUES)) return true
   return text.split(' ').filter(Boolean).length <= 2
 }
 
 function findPlatform(text) {
-  const padded = ` ${text} `
-  const match = PLATFORMS.find((entry) => entry.words.some((word) => padded.includes(word)))
+  const match = PLATFORMS.find((entry) => hasAny(text, entry.words))
   return match ? PLATFORM_STEPS[match.key] : null
 }
 
@@ -276,7 +310,7 @@ export function guideReply(messages) {
 
   // They answered a previous question by naming an app: give that app's steps.
   if (wordCount <= 5) {
-    const platform = findPlatform(` ${ctx.last} `)
+    const platform = findPlatform(ctx.last)
     const aboutReporting =
       ['report', 'bullying', 'danger', 'block', 'hacked'].includes(ctx.previousIntent) ||
       ctx.previous.includes('report') ||
@@ -342,7 +376,11 @@ export function guideReply(messages) {
     return greeting(ctx)
   }
 
-  if (hasWord(ctx.last, ['thank', 'thanks', 'thankyou', 'ty', 'bye', 'goodbye'])) {
+  const topic = TOPICS.find((entry) => hasAny(ctx.last, entry.words))
+  const definition = isDefinitionQuestion(ctx.last) ? findDefinition(ctx.last) : null
+
+  // "Thanks, but how do I report…" is a new question, not a goodbye.
+  if (!topic && !definition && hasWord(ctx.last, ['thank', 'thanks', 'thankyou', 'ty', 'bye', 'goodbye'])) {
     return {
       reply: pick(
         ctx,
@@ -365,7 +403,6 @@ export function guideReply(messages) {
   }
 
   // A question about a specific term gets that term's explanation.
-  const definition = isDefinitionQuestion(ctx.last) ? findDefinition(ctx.last) : null
   if (definition) {
     return compose(ctx, {
       opener: 'neutral',
@@ -379,8 +416,6 @@ export function guideReply(messages) {
       intent: 'definition',
     })
   }
-
-  const topic = TOPICS.find((entry) => hasAny(ctx.last, entry.words))
 
   if (topic) {
     if (topic.id === 'report') {

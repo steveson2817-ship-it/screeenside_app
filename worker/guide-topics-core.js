@@ -37,6 +37,7 @@ export const CORE_TOPICS = [
       'will hurt me',
       'beat me up',
       'gun',
+      'guns',
       'knife',
       'knows where i live',
       'following me home',
@@ -123,6 +124,7 @@ export const CORE_TOPICS = [
     words: [
       'scam',
       'scammed',
+      'scammer',
       'fraud',
       'otp',
       'upi',
@@ -188,6 +190,7 @@ export const CORE_TOPICS = [
       'fake profile',
       'fake page',
       'impersonat',
+      'impersonate',
       'pretending to be me',
       'pretending to be my',
       'using my photo',

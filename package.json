@@ -9,7 +9,8 @@
     "build": "vite build",
     "preview": "vite preview --host 0.0.0.0 --port 4173",
     "worker:build": "wrangler deploy --dry-run --outdir dist-worker",
-    "start": "wrangler dev --port 3000 --ip 0.0.0.0"
+    "start": "wrangler dev --port 3000 --ip 0.0.0.0",
+    "test": "node --test tests/*.test.js"
   },
   "dependencies": {
     "lucide-react": "^0.469.0",
