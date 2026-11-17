@@ -1,0 +1,25 @@
+{
+  "name": "screenside",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "ScreenSide — a student-friendly cyberbullying awareness website",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview --host 0.0.0.0 --port 4173",
+    "worker:build": "wrangler deploy --dry-run --outdir dist-worker",
+    "start": "wrangler dev --port 3000 --ip 0.0.0.0"
+  },
+  "dependencies": {
+    "lucide-react": "^0.469.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.28.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.4",
+    "vite": "^5.4.11",
+    "wrangler": "^4.2.0"
+  }
+}
