@@ -12,3 +12,6 @@ not_found_handling = "single-page-application"
 binding = "DB"
 database_name = "screenside"
 database_id = "650953af-d25e-4f84-a569-0d43dff69e2c"
+
+[ai]
+binding = "AI"
