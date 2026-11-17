@@ -7,6 +7,8 @@ export default function Home() {
   const { content } = useContent()
   const site = content.site
   const { features } = extras
+  const firstLesson = (content.lessons || [])[0]
+  const scenarioCount = (content.quest || []).length
 
   return (
     <div className="home">
@@ -123,7 +125,7 @@ export default function Home() {
             </p>
           </div>
           <div className="split-cards">
-            <Link to="/learn/what-is-cyberbullying" className="mini-card">
+            <Link to={firstLesson ? `/learn/${firstLesson.id}` : '/learn'} className="mini-card">
               <Icon name="book" size={22} />
               <div>
                 <h3>Understand it first</h3>
@@ -135,7 +137,7 @@ export default function Home() {
               <Icon name="gamepad" size={22} />
               <div>
                 <h3>Test what you know</h3>
-                <p>Try eight quick real-life scenarios.</p>
+                <p>Try {scenarioCount} quick real-life {scenarioCount === 1 ? 'scenario' : 'scenarios'}.</p>
               </div>
               <Icon name="arrow-right" size={18} />
             </Link>

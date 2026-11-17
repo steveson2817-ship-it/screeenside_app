@@ -1,9 +1,11 @@
 import { Link } from 'react-router-dom'
 import Icon from '../components/Icon.jsx'
 import PageHeader from '../components/PageHeader.jsx'
+import { useContent } from '../components/ContentContext.jsx'
 import { extras } from '../content/index.js'
 
 export default function Privacy() {
+  const { content } = useContent()
   const { privacyPoints } = extras
 
   return (
@@ -11,7 +13,7 @@ export default function Privacy() {
       <PageHeader
         eyebrow="Privacy & safety"
         title="What ScreenSide does with your information"
-        lead="ScreenSide is built for students, so it collects as little as possible and never asks you to sign in or share personal details."
+        lead={content.site.privacySummary}
         icon="lock"
       />
 

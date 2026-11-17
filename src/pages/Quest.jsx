@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import Icon from '../components/Icon.jsx'
 import PageHeader from '../components/PageHeader.jsx'
@@ -18,6 +18,18 @@ export default function Quest() {
   const total = scenarios.length
   const score = useMemo(() => answers.filter((answer) => answer.correct).length, [answers])
 
+  // The scenario list can change mid-game (the saved copy loads, or the owner edits it).
+  // If the current position no longer exists, go back to the intro instead of crashing.
+  const lostPlace = started && !finished && !current
+  useEffect(() => {
+    if (lostPlace) {
+      setStarted(false)
+      setIndex(0)
+      setSelected(null)
+      setAnswers([])
+    }
+  }, [lostPlace])
+
   const start = () => {
     setStarted(true)
     setIndex(0)
@@ -27,7 +39,7 @@ export default function Quest() {
   }
 
   const choose = (optionIndex) => {
-    if (selected !== null) return
+    if (selected !== null || !current) return
     setSelected(optionIndex)
     const option = current.options[optionIndex]
     setAnswers((previous) => [...previous, { scenarioId: current.id, optionIndex, correct: Boolean(option.correct) }])
@@ -56,13 +68,13 @@ export default function Quest() {
     )
   }
 
-  if (!started) {
+  if (!started || lostPlace) {
     return (
       <div className="page">
         <PageHeader
           eyebrow="CyberQuest"
           title="What would you actually do?"
-          lead="Eight fictional online situations. Pick the response you think is best, and find out why it works."
+          lead={`${total} fictional online ${total === 1 ? 'situation' : 'situations'}. Pick the response you think is best, and find out why it works.`}
           icon="gamepad"
         />
         <section className="container section-tight">
@@ -71,7 +83,7 @@ export default function Quest() {
               <Icon name="gamepad" size={56} strokeWidth={1.3} />
             </div>
             <div>
-              <h2>{total} quick scenarios</h2>
+              <h2>{total} quick {total === 1 ? 'scenario' : 'scenarios'}</h2>
               <ul className="quest-rules">
                 <li>
                   <Icon name="check" size={16} /> Every answer comes with an explanation.
@@ -188,7 +200,7 @@ export default function Quest() {
               }
               return (
                 <button
-                  key={option.text}
+                  key={optionIndex}
                   type="button"
                   className={`answer${state}${isChosen ? ' chosen' : ''}`}
                   onClick={() => choose(optionIndex)}

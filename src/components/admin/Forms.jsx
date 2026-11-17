@@ -131,7 +131,7 @@ export function ItemPicker({ items, selected, onSelect, onAdd, onDelete, labelOf
     <div className="picker">
       <ul className="picker-list">
         {items.map((item, index) => (
-          <li key={item.id || index}>
+          <li key={index}>
             <button
               type="button"
               className={`picker-item${index === selected ? ' active' : ''}`}
@@ -147,7 +147,14 @@ export function ItemPicker({ items, selected, onSelect, onAdd, onDelete, labelOf
           <Icon name="plus" size={15} /> {addLabel}
         </button>
         {items.length > 1 ? (
-          <button type="button" className="btn btn-ghost btn-sm danger-text" onClick={() => onDelete(selected)}>
+          <button
+            type="button"
+            className="btn btn-ghost btn-sm danger-text"
+            onClick={() => {
+              const name = labelOf(items[selected], selected)
+              if (window.confirm(`Delete "${name}"? This only takes effect after you save.`)) onDelete(selected)
+            }}
+          >
             <Icon name="trash" size={15} /> Delete
           </button>
         ) : null}

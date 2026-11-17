@@ -50,7 +50,7 @@ export default function LessonsEditor({ value, onSave, saving, message, error })
     <div className="admin-panel">
       <div className="panel-head">
         <h2>Lessons</h2>
-        <p className="muted">Six short lessons with examples and a knowledge check. Students cannot edit these.</p>
+        <p className="muted">Short lessons with examples and a knowledge check. Students cannot edit these.</p>
       </div>
 
       <div className="admin-split">

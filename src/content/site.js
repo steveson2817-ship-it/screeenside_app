@@ -32,7 +32,7 @@ export const features = [
     id: 'learn',
     icon: 'book',
     title: 'Learn',
-    text: 'Understand cyberbullying in six short lessons, with examples and a quick knowledge check.',
+    text: 'Understand cyberbullying through short lessons, with examples and a quick knowledge check.',
     to: '/learn',
     cta: 'Start learning',
   },

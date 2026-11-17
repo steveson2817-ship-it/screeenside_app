@@ -22,7 +22,7 @@ export default function Learn() {
       <PageHeader
         eyebrow="Learn"
         title="Understanding cyberbullying, one short lesson at a time"
-        lead="Six simple lessons with real examples and a quick knowledge check. Read them in order or jump to whatever you need."
+        lead={`${lessons.length} short ${lessons.length === 1 ? 'lesson' : 'lessons'} with real examples and a quick knowledge check. Read them in order or jump to whatever you need.`}
         icon="book"
       />
 

@@ -27,6 +27,9 @@ export default function Chat() {
   const [showPrivacy, setShowPrivacy] = useState(false)
   const bodyRef = useRef(null)
   const inputRef = useRef(null)
+  // Bumped by "New chat", so a reply that arrives afterwards is dropped instead of
+  // appearing in the fresh conversation.
+  const conversationRef = useRef(0)
 
   useEffect(() => {
     const node = bodyRef.current
@@ -46,14 +49,17 @@ export default function Chat() {
     setMessages(history)
     setInput('')
     setPending(true)
+    const conversation = conversationRef.current
 
     try {
       const data = await sendChatMessage(history.map(({ role, content }) => ({ role, content })))
+      if (conversation !== conversationRef.current) return
       setMessages((current) => [
         ...current,
         { id: nextId(), role: 'assistant', content: data.reply, source: data.source },
       ])
     } catch (error) {
+      if (conversation !== conversationRef.current) return
       setMessages((current) => [
         ...current,
         {
@@ -64,7 +70,7 @@ export default function Chat() {
         },
       ])
     } finally {
-      setPending(false)
+      if (conversation === conversationRef.current) setPending(false)
     }
   }
 
@@ -99,6 +105,7 @@ export default function Chat() {
                 type="button"
                 className="btn btn-secondary btn-sm"
                 onClick={() => {
+                  conversationRef.current += 1
                   setMessages([])
                   setInput('')
                   setPending(false)

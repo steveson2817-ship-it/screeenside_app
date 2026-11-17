@@ -43,7 +43,7 @@ export default function Help() {
                   target="_blank"
                   rel="noreferrer noopener"
                 >
-                  <Icon name={item.id === 'tn-cyber-crime' ? 'instagram' : 'globe'} size={17} />
+                  <Icon name={item.icon === 'instagram' ? 'instagram' : 'globe'} size={17} />
                   {item.actionLabel}
                 </a>
               ) : null}
@@ -63,8 +63,8 @@ export default function Help() {
           <div className="steps-card">
             <h2>If it is happening to you</h2>
             <ol className="numbered-steps">
-              {helpSteps.map((step) => (
-                <li key={step}>
+              {helpSteps.map((step, index) => (
+                <li key={index}>
                   <span>{step}</span>
                 </li>
               ))}
@@ -78,7 +78,8 @@ export default function Help() {
           <div className="help-side">
             <div className="emergency-card">
               <Icon name="siren" size={24} />
-              <h2>Immediate danger</h2>
+              <h2>{site.helpBannerTitle}</h2>
+              <p>{site.helpBannerText}</p>
               <p>{emergencyNote}</p>
               <a className="btn btn-on-dark btn-block" href="tel:112">
                 <Icon name="phone-call" size={17} /> Call 112

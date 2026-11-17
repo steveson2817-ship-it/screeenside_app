@@ -12,15 +12,15 @@ const navigation = [
   { label: 'Help Centre', to: '/help' },
 ]
 
-function Brand({ size = 'md' }) {
+function Brand({ site, size = 'md' }) {
   return (
-    <Link to="/" className={`brand brand-${size}`} aria-label="ScreenSide home">
+    <Link to="/" className={`brand brand-${size}`} aria-label={`${site.name} home`}>
       <span className="brand-mark">
         <Icon name="shield" size={size === 'lg' ? 26 : 21} strokeWidth={2.1} />
       </span>
       <span className="brand-text">
-        <strong>ScreenSide</strong>
-        <em>Your online safety starts here.</em>
+        <strong>{site.name}</strong>
+        <em>{site.tagline}</em>
       </span>
     </Link>
   )
@@ -51,7 +51,7 @@ export default function Layout({ children }) {
 
       <header className="site-header">
         <div className="header-inner container">
-          <Brand />
+          <Brand site={site} />
 
           <nav className="nav" aria-label="Main navigation">
             {navigation.map((item) => (
@@ -110,7 +110,7 @@ export default function Layout({ children }) {
       <footer className="site-footer">
         <div className="container footer-grid">
           <div className="footer-brand">
-            <Brand size="lg" />
+            <Brand site={site} size="lg" />
             <p>{site.footerNote}</p>
             <span className="footer-badge">
               <Icon name="shield" size={15} /> {site.safetyReminder}
@@ -118,7 +118,7 @@ export default function Layout({ children }) {
           </div>
 
           <div className="footer-links">
-            <h3>Explore</h3>
+            <h3>{site.footerLinksTitle}</h3>
             <Link to="/learn">Learn</Link>
             <Link to="/safety">Safety Tips</Link>
             <Link to="/cyberquest">CyberQuest</Link>
@@ -139,7 +139,7 @@ export default function Layout({ children }) {
         </div>
 
         <div className="container footer-bottom">
-          <p>© {new Date().getFullYear()} ScreenSide · Made for students.</p>
+          <p>© {new Date().getFullYear()} {site.name} · Made for students.</p>
           <Link to="/admin" className="footer-admin">
             {site.adminHint}
           </Link>

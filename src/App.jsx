@@ -16,7 +16,8 @@ import NotFound from './pages/NotFound.jsx'
 function ScrollToTop() {
   const { pathname } = useLocation()
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' })
+    // 'instant' overrides the smooth scrolling set in CSS, so a new page never animates in from the old position.
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
   }, [pathname])
   return null
 }

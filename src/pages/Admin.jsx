@@ -18,7 +18,7 @@ const TABS = [
   { id: 'account', label: 'Account' },
 ]
 
-function AuthPanel({ configured, onSignedIn }) {
+function AuthPanel({ configured, setupAvailable, notice, onSignedIn }) {
   const [mode, setMode] = useState(configured ? 'login' : 'setup')
   const [token, setToken] = useState('')
   const [password, setPassword] = useState('')
@@ -62,6 +62,19 @@ function AuthPanel({ configured, onSignedIn }) {
             ? 'This page is only for the site owner. Enter the one-time setup code and choose a password. Students never see this page.'
             : 'Only the site owner can manage ScreenSide content. Students can use every page without signing in.'}
         </p>
+
+        {notice ? (
+          <p className="alert err">
+            <Icon name="alert" size={15} /> {notice}
+          </p>
+        ) : null}
+
+        {mode === 'setup' && !setupAvailable ? (
+          <p className="alert err">
+            <Icon name="alert" size={15} /> Setup is switched off until the site owner adds the SETUP_TOKEN secret to
+            the server.
+          </p>
+        ) : null}
 
         {mode === 'setup' ? (
           <ol className="setup-steps">
@@ -142,7 +155,7 @@ function AuthPanel({ configured, onSignedIn }) {
   )
 }
 
-function Dashboard({ onSignedOut }) {
+function Dashboard({ onSignedOut, onSessionEnded }) {
   const { applyContent } = useContent()
   const [tab, setTab] = useState('site')
   const [content, setContent] = useState(null)
@@ -167,6 +180,10 @@ function Dashboard({ onSignedOut }) {
       setMessage('Saved. The live site is updated.')
       return true
     } catch (err) {
+      if (err.status === 401) {
+        onSessionEnded(err.message)
+        return false
+      }
       setError(err.message)
       return false
     } finally {
@@ -250,7 +267,7 @@ function Dashboard({ onSignedOut }) {
         {tab === 'help' ? (
           <HelpEditor key="help" value={content.help} onSave={save} saving={saving} message={message} error={error} />
         ) : null}
-        {tab === 'account' ? <AccountPanel onLogout={onSignedOut} /> : null}
+        {tab === 'account' ? <AccountPanel onLogout={onSignedOut} onSessionEnded={onSessionEnded} /> : null}
       </div>
     </div>
   )
@@ -259,14 +276,17 @@ function Dashboard({ onSignedOut }) {
 export default function Admin() {
   const [session, setSession] = useState(null)
   const [error, setError] = useState('')
+  const [notice, setNotice] = useState('')
 
+  // A failed status check is shown as an error with a retry, never as the first-time setup form.
   const check = () => {
+    setError('')
     adminSession()
-      .then(setSession)
-      .catch((err) => {
-        setError(err.message)
-        setSession({ configured: false, authenticated: false })
+      .then((next) => {
+        setSession(next)
+        if (next.authenticated) setNotice('')
       })
+      .catch((err) => setError(err.message))
   }
 
   useEffect(() => {
@@ -281,10 +301,24 @@ export default function Admin() {
     }
   }
 
+  const sessionEnded = (message) => {
+    setNotice(message || 'Your session has ended. Please sign in again.')
+    setSession((current) => ({ ...(current || {}), configured: true, authenticated: false }))
+  }
+
   if (!session) {
     return (
       <div className="container section">
-        <p className="muted">Checking admin access…</p>
+        {error ? (
+          <div className="empty-card">
+            <p className="muted">Could not check admin access: {error}</p>
+            <button type="button" className="btn btn-primary" onClick={check}>
+              Try again
+            </button>
+          </div>
+        ) : (
+          <p className="muted">Checking admin access…</p>
+        )}
       </div>
     )
   }
@@ -292,17 +326,19 @@ export default function Admin() {
   if (!session.authenticated) {
     return (
       <div className="page">
-        <AuthPanel configured={session.configured} onSignedIn={check} />
-        {error ? (
-          <p className="container muted center">{error}</p>
-        ) : null}
+        <AuthPanel
+          configured={session.configured}
+          setupAvailable={session.setupAvailable !== false}
+          notice={notice}
+          onSignedIn={check}
+        />
       </div>
     )
   }
 
   return (
     <div className="page">
-      <Dashboard onSignedOut={signOut} />
+      <Dashboard onSignedOut={signOut} onSessionEnded={sessionEnded} />
     </div>
   )
 }

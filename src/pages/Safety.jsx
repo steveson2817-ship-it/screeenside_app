@@ -17,14 +17,16 @@ export default function Safety() {
     saveList(CHECKLIST_KEY, next)
   }
 
-  const progress = checklist.length ? Math.round((checked.length / checklist.length) * 100) : 0
+  // Only count items that are still on the checklist, so old saved entries never push it past 100%.
+  const doneCount = checklist.filter((item) => checked.includes(item)).length
+  const progress = checklist.length ? Math.round((doneCount / checklist.length) * 100) : 0
 
   return (
     <div className="page">
       <PageHeader
         eyebrow="Safety Tips"
         title="Small habits that keep you safer online"
-        lead="Eight practical tips you can actually use — plus a checklist to fill in for your own accounts."
+        lead={`${tips.length} practical ${tips.length === 1 ? 'tip' : 'tips'} you can actually use — plus a checklist to fill in for your own accounts.`}
         icon="shield"
       />
 
@@ -38,8 +40,8 @@ export default function Safety() {
               <h2>{tip.title}</h2>
               <p className="tip-summary">{tip.summary}</p>
               <ul className="tip-points">
-                {tip.points.map((point) => (
-                  <li key={point}>
+                {tip.points.map((point, pointIndex) => (
+                  <li key={pointIndex}>
                     <Icon name="check" size={15} />
                     <span>{point}</span>
                   </li>
@@ -61,7 +63,7 @@ export default function Safety() {
               </p>
             </div>
             <div className="checklist-score">
-              <strong>{checked.length}</strong>
+              <strong>{doneCount}</strong>
               <span>of {checklist.length} done</span>
             </div>
           </div>
@@ -89,7 +91,7 @@ export default function Safety() {
             })}
           </ul>
 
-          {checked.length === checklist.length ? (
+          {checklist.length > 0 && doneCount === checklist.length ? (
             <p className="checklist-done">
               <Icon name="trophy" size={18} /> Nice work — your accounts are in much better shape.
             </p>

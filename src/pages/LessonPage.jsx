@@ -11,15 +11,17 @@ export default function LessonPage() {
   const index = lessons.findIndex((item) => item.id === lessonId)
   const lesson = index >= 0 ? lessons[index] : null
 
-  const [done, setDone] = useState([])
-  const [selected, setSelected] = useState(null)
+  const [done, setDone] = useState(() => loadList(LESSON_PROGRESS_KEY))
+  // The answer is remembered together with the lesson it belongs to, so moving to the next
+  // lesson never carries the previous answer over (or marks the next lesson as complete).
+  const [answer, setAnswer] = useState({ lessonId: null, index: null })
 
   useEffect(() => {
     setDone(loadList(LESSON_PROGRESS_KEY))
-    setSelected(null)
   }, [lessonId])
 
   const quiz = lesson ? lesson.quiz : null
+  const selected = answer.lessonId === lessonId ? answer.index : null
   const answered = selected !== null
   const correct = answered && quiz && selected === quiz.answerIndex
 
@@ -30,10 +32,10 @@ export default function LessonPage() {
     setDone(next)
   }
 
-  useEffect(() => {
-    if (correct) markDone()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [correct])
+  const choose = (optionIndex) => {
+    setAnswer({ lessonId, index: optionIndex })
+    if (quiz && optionIndex === quiz.answerIndex) markDone()
+  }
 
   const position = useMemo(() => {
     if (index < 0) return { previous: null, next: null }
@@ -100,7 +102,7 @@ export default function LessonPage() {
 
           <div className="lesson-points">
             {lesson.points.map((point, pointIndex) => (
-              <section key={point.heading} className="point reveal" style={{ '--delay': `${pointIndex * 60}ms` }}>
+              <section key={pointIndex} className="point reveal" style={{ '--delay': `${pointIndex * 60}ms` }}>
                 <span className="point-index">{pointIndex + 1}</span>
                 <div>
                   <h2>{point.heading}</h2>
@@ -114,8 +116,8 @@ export default function LessonPage() {
             <section className="example-block">
               <h2>What it can look like</h2>
               <ul className="example-list">
-                {lesson.examples.map((example) => (
-                  <li key={example}>
+                {lesson.examples.map((example, exampleIndex) => (
+                  <li key={exampleIndex}>
                     <Icon name="arrow-right" size={15} />
                     {example}
                   </li>
@@ -148,10 +150,10 @@ export default function LessonPage() {
                   }
                   return (
                     <button
-                      key={option}
+                      key={optionIndex}
                       type="button"
                       className={`quiz-option${state}${selected === optionIndex ? ' selected' : ''}`}
-                      onClick={() => setSelected(optionIndex)}
+                      onClick={() => choose(optionIndex)}
                       disabled={answered}
                     >
                       <span className="quiz-letter">{String.fromCharCode(65 + optionIndex)}</span>
@@ -170,7 +172,7 @@ export default function LessonPage() {
                   <strong>{correct ? 'That’s right.' : 'Not quite — here’s the idea.'}</strong>
                   <p>{quiz.explanation}</p>
                   {!correct ? (
-                    <button type="button" className="btn btn-secondary btn-sm" onClick={() => setSelected(null)}>
+                    <button type="button" className="btn btn-secondary btn-sm" onClick={() => setAnswer({ lessonId: null, index: null })}>
                       <Icon name="reset" size={15} /> Try again
                     </button>
                   ) : null}

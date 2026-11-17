@@ -1,8 +1,8 @@
 async function request(path, options = {}) {
   const response = await fetch(path, {
     credentials: 'same-origin',
-    headers: { 'content-type': 'application/json', accept: 'application/json', ...(options.headers || {}) },
     ...options,
+    headers: { 'content-type': 'application/json', accept: 'application/json', ...(options.headers || {}) },
   })
 
   let data = null

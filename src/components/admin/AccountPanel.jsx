@@ -3,7 +3,7 @@ import Icon from '../Icon.jsx'
 import { Field } from './Forms.jsx'
 import { adminChangePassword } from '../../lib/api.js'
 
-export default function AccountPanel({ onLogout }) {
+export default function AccountPanel({ onLogout, onSessionEnded }) {
   const [current, setCurrent] = useState('')
   const [next, setNext] = useState('')
   const [confirm, setConfirm] = useState('')
@@ -22,11 +22,15 @@ export default function AccountPanel({ onLogout }) {
     setBusy(true)
     try {
       await adminChangePassword(current, next)
-      setMessage('Password updated. Use the new one next time you sign in.')
+      setMessage('Password updated. Any other signed-in devices have been signed out.')
       setCurrent('')
       setNext('')
       setConfirm('')
     } catch (err) {
+      if (err.status === 401 && onSessionEnded) {
+        onSessionEnded(err.message)
+        return
+      }
       setError(err.message)
     } finally {
       setBusy(false)
