@@ -53,19 +53,50 @@ function boolean(value) {
   return value === true
 }
 
+// Ids become URLs and React keys, so two items can never share one.
+function uniqueIds(items, label) {
+  const seen = new Set()
+  items.forEach((item) => {
+    if (seen.has(item.id)) throw new ValidationError(`Two ${label} use the id "${item.id}". Each id must be different.`)
+    seen.add(item.id)
+  })
+  return items
+}
+
+const SITE_LABELS = {
+  name: 'Site name',
+  tagline: 'Tagline',
+  heroBadge: 'Hero badge',
+  heroTitle: 'Hero heading',
+  heroText: 'Hero introduction',
+  featuresTitle: 'Features heading',
+  featuresText: 'Features introduction',
+  awarenessTitle: 'Awareness heading',
+  awarenessText: 'Awareness message',
+  safetyReminder: 'Safety reminder',
+  helpBannerTitle: 'Help banner heading',
+  helpBannerText: 'Help banner text',
+  helpIntro: 'Help Centre introduction',
+  helpNote: 'Help Centre note',
+  privacySummary: 'Privacy summary',
+  footerNote: 'Footer note',
+  footerLinksTitle: 'Footer links heading',
+  adminHint: 'Footer admin link text',
+}
+
 function validateSite(value) {
   const base = defaultContent.site
   if (!value || typeof value !== 'object' || Array.isArray(value)) throw new ValidationError('Site settings must be an object.')
   const out = {}
   Object.keys(base).forEach((key) => {
     const max = key === 'tagline' ? 120 : key === 'name' ? 40 : 1500
-    out[key] = required(value[key] !== undefined ? value[key] : base[key], max, key)
+    out[key] = required(value[key] !== undefined ? value[key] : base[key], max, SITE_LABELS[key] || key)
   })
   return out
 }
 
 function validateLessons(value) {
-  return list(value, 24, 'Lessons').map((lesson, index) => {
+  const lessons = list(value, 24, 'Lessons').map((lesson, index) => {
     if (!lesson || typeof lesson !== 'object') throw new ValidationError(`Lesson ${index + 1} is not valid.`)
     const quiz = lesson.quiz || {}
     const options = list(quiz.options || [], 6, 'Quiz options').map((option, i) =>
@@ -83,12 +114,12 @@ function validateLessons(value) {
       title: required(lesson.title, 140, `Lesson ${index + 1} title`),
       subtitle: text(lesson.subtitle, 140, `Lesson ${index + 1} subtitle`),
       summary: required(lesson.summary, 700, `Lesson ${index + 1} summary`),
-      points: list(lesson.points || [], 10, `Lesson ${index + 1} sections`).map((point) => ({
-        heading: required(point && point.heading, 140, 'Section heading'),
-        text: required(point && point.text, 900, 'Section text'),
+      points: list(lesson.points || [], 10, `Lesson ${index + 1} sections`).map((point, i) => ({
+        heading: required(point && point.heading, 140, `Lesson ${index + 1} section ${i + 1} heading`),
+        text: required(point && point.text, 900, `Lesson ${index + 1} section ${i + 1} text`),
       })),
-      examples: list(lesson.examples || [], 12, `Lesson ${index + 1} examples`).map((example) =>
-        required(example, 320, 'Example')
+      examples: list(lesson.examples || [], 12, `Lesson ${index + 1} examples`).map((example, i) =>
+        required(example, 320, `Lesson ${index + 1} example ${i + 1}`)
       ),
       takeaway: text(lesson.takeaway, 700, `Lesson ${index + 1} takeaway`),
       quiz: {
@@ -99,10 +130,11 @@ function validateLessons(value) {
       },
     }
   })
+  return uniqueIds(lessons, 'lessons')
 }
 
 function validateTips(value) {
-  return list(value, 24, 'Tips').map((tip, index) => {
+  const tips = list(value, 24, 'Tips').map((tip, index) => {
     if (!tip || typeof tip !== 'object') throw new ValidationError(`Tip ${index + 1} is not valid.`)
     return {
       id: id(tip.id),
@@ -114,10 +146,11 @@ function validateTips(value) {
       ),
     }
   })
+  return uniqueIds(tips, 'tips')
 }
 
 function validateQuest(value) {
-  return list(value, 24, 'Scenarios').map((scenario, index) => {
+  const scenarios = list(value, 24, 'Scenarios').map((scenario, index) => {
     if (!scenario || typeof scenario !== 'object') throw new ValidationError(`Scenario ${index + 1} is not valid.`)
     const options = list(scenario.options || [], 5, `Scenario ${index + 1} answers`).map((option, i) => ({
       text: required(option && option.text, 320, `Scenario ${index + 1} answer ${i + 1}`),
@@ -133,12 +166,24 @@ function validateQuest(value) {
       explanation: required(scenario.explanation, 800, `Scenario ${index + 1} explanation`),
     }
   })
+  return uniqueIds(scenarios, 'scenarios')
 }
 
 function validateHelp(value) {
-  return list(value, 20, 'Help options').map((item, index) => {
+  const items = list(value, 20, 'Help options').map((item, index) => {
     if (!item || typeof item !== 'object') throw new ValidationError(`Help option ${index + 1} is not valid.`)
     const actionType = ['phone', 'link', 'none'].includes(item.actionType) ? item.actionType : 'none'
+    const href = actionType === 'none' ? '' : link(item.href)
+    // A card with a button but no address would silently show no button at all.
+    if (actionType !== 'none' && !href) {
+      throw new ValidationError(`Help option ${index + 1} has a button, so it needs a phone link or web address.`)
+    }
+    if (actionType === 'phone' && !href.startsWith('tel:')) {
+      throw new ValidationError(`Help option ${index + 1} is a phone button, so its link must start with tel: (for example tel:1930).`)
+    }
+    if (actionType === 'link' && !/^https?:/.test(href)) {
+      throw new ValidationError(`Help option ${index + 1} is a web link, so it must start with https://.`)
+    }
     return {
       id: id(item.id),
       icon: icon(item.icon),
@@ -147,10 +192,11 @@ function validateHelp(value) {
       description: required(item.description, 900, `Help option ${index + 1} description`),
       actionType,
       actionLabel: text(item.actionLabel, 100, `Help option ${index + 1} button label`),
-      href: actionType === 'none' ? '' : link(item.href),
+      href,
       urgent: boolean(item.urgent),
     }
   })
+  return uniqueIds(items, 'help options')
 }
 
 const validators = {
